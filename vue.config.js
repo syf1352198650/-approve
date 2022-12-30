@@ -17,6 +17,7 @@ module.exports = defineConfig({
 
        
         target: 'http://localhost:3000/',  
+        // target:'http://8.130.43.85:3000',
         changeOrigin: true,
        
         pathRewrite: {

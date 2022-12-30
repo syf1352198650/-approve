@@ -3,6 +3,16 @@ import {request} from '@/utils/request'
 import { IUser,isLoginData } from '@/models/User';
 import { IResData } from '@/models/ResponseData';
 import { AxiosPromise } from 'axios';
+export const uploadFiles=(files:any)=>{
+  return request({
+    url:'/user/file',
+    method:'post',
+    data:files,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  })
+}
 export const doLogin=(user:IUser):AxiosPromise<IResData<isLoginData>>=>{
     return request({
         url:'user/login',
@@ -160,5 +170,12 @@ export function permissionUserlist () { // 权限管理 -列表展示
   return request ({
     url:'user/list',
     method:'get',
+  })
+}
+export function mergeFiles(data:any){
+  return request({
+    url:'loan/mergeFiles',
+    method:'post',
+    data
   })
 }

@@ -210,20 +210,111 @@
 
 
         </el-form>
+        <el-card>
+              <el-upload
+    v-model:file-list="fileList"
+    action='#'
+    :multiple="true"
+    class="upload-demo"
+    :auto-upload="false"
+    :on-change="handleChange"
+    :on-success="handsuccess"
+  >
+    <el-button type="primary">选择添加附件</el-button>
+    <template #tip>
+      <div class="el-upload__tip">
+        请将文件进行压缩，可以加快上传
+      </div>
+    </template>
+  </el-upload>
+        </el-card>
         <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm(ruleFormRef)">立即创建</el-button>
         <el-button @click="resetForm(ruleFormRef)">重置</el-button>
       </div>
     </div>
 </template>
-
+ 
 <script setup lang="ts">
-import {loanCreate} from "@/api/user"
+import {loanCreate,uploadFiles as uploadFilesFn ,mergeFiles as mergeFilesFn} from "@/api/user"
 import { reactive, ref } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules,UploadProps, UploadUserFile } from 'element-plus'
 import {ElNotification} from "element-plus"
 import { useRouter } from "vue-router";
+import { log } from "console";
 const router=useRouter()
+const fileList = ref<UploadUserFile[]>([
+ 
+])
+const handsuccess=()=>{
+    console.log(1);
+    
+}
+
+const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
+//   fileList.value = fileList.value.slice(-3)
+fileList.value.push(uploadFile)
+console.log('files',uploadFile.name);
+console.log('files',uploadFiles);
+ uploadFilesHand()
+}
+const limt={
+    size:1024*500
+}
+const uploadFilesHand=()=>{
+    
+      let tasks=[]
+    fileList.value.map((file)=>{
+        console.log('文件大小',file.size);
+        console.log('文件名字',file.name.split('.')[0]);
+        
+       const chunkNum=Math.ceil(file.size/limt.size)
+       console.log('分片数目',chunkNum);
+       let start=0;
+       let end;
+       let index=0;
+       while(start<file.size){
+        console.log('map');
+        
+        end=start+limt.size;
+        if(end>file.size){
+            end=file.size;
+            // return;;
+        }
+        let soloChunk=file.raw.slice(start,end)
+        start=end;
+        const formData=new FormData();
+        formData.append('file',soloChunk,file.name.split('.')[0]+'-'+index+'.'+file.name.split('.')[1])
+        tasks.push(uploadFilesFn(formData))
+        index++;
+       }
+       
+         console.log(tasks);
+     Promise.all(tasks).then((res)=>{
+        console.log('promise',res);
+        let params={
+            chunkNum:chunkNum,
+            filename:file.name.split('.')[0],
+            type:file.name.split('.')[1]
+        }
+        mergeFilesFn(params).then((res)=>{
+            console.log('上传成功');
+            
+        })
+             })
+    })
+    
+     
+    
+    // uploadFilesFn(formData).then((res)=>{
+    //     console.log('上传成功');
+        
+    // })
+  
+    
+}
+   
+
 const sexOptions = [
     { key: 'man', display_name: '男' },
     { key: 'woman', display_name: '女' }
@@ -386,5 +477,9 @@ const resetForm = (formEl: FormInstance | undefined) => {
 </script>
 
 <style scoped>
-
+.dialog-footer{
+    margin-top: 20px;
+    display: flex;
+    justify-content:space-around
+}
 </style>
